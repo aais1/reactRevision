@@ -11,7 +11,6 @@ function App() {
   const [countries, setCountries] = useState(contries);
 
   const searchWeather = async () => {
-    setCity('');
     try {
       setLoading(true);
       setInvalid("");
@@ -26,8 +25,6 @@ function App() {
       }
       const data = await resp.json();
       setWeatherData(data);
-      console.log(weatherData);
-      console.log(data);
     } catch (err) {
       console.log(err);
     } finally {
@@ -35,40 +32,19 @@ function App() {
     }
   };
 
-  function getLocationAndSetWeather() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setLoading(true);
-        fetch(
-          `https://api.weatherapi.com/v1/current.json?key=${
-            import.meta.env.VITE_API_KEY
-          }&q=${position.coords.latitude},${position.coords.longitude}&aqi=no`
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            setWeatherData(data);
-            setLoading(false);
-          });
-      });
-    } else {
-      setLoading(false);
-      alert("Geolocation is not supported by this browser.");
-    }
-  }
-
   useEffect(() => {
-    getLocationAndSetWeather();
-  }, []);
-
-  useEffect(()=>{
- const filterArr=contries.filter((country,index)=>{
-  if(country.value.toLowerCase().includes(city.toLowerCase())){
-    return country;
-  }
- })
- console.log(filterArr);
- setCountries(filterArr);
- },[city])
+    const filterCountries = () => {
+      if (city.trim() === "") {
+        setCountries(contries); // Reset to original list if input is empty
+      } else {
+        const filteredCountries = contries.filter(country =>
+          country.value.toLowerCase().includes(city.toLowerCase())
+        );
+        setCountries(filteredCountries);
+      }
+    };
+    filterCountries();
+  }, [city]);
 
   return (
     <>
@@ -79,13 +55,16 @@ function App() {
             className="ip"
             placeholder="Enter city"
             value={city}
-            onClick={()=>setShowCountries(true)}
+            onClick={() => setShowCountries(true)}
             onChange={(e) => setCity(e.target.value)}
           />
-          <button className="bt" onClick={searchWeather}>
+          <button className="bt" onClick={()=>{
+            searchWeather()
+            setShowCountries(false)
+          }}>
             Search
           </button>
-          {showCountries> 0 && (
+          {showCountries && (
             <div
               style={{
                 backgroundColor: "white",
@@ -96,21 +75,22 @@ function App() {
                 flexDirection: "column",
                 borderCollapse: "collapse",
                 color: "black",
-                height: "120px",
+                maxHeight: "120px",
+                height: "auto",
                 overflowY: "scroll",
-                bottom: -125,
-                right:0
+                top: 75,
+                right: 0
               }}
             >
-              {countries.map((country, index) => {
-                return (
+              {countries.length > 0 ? (
+                countries.map((country, index) => (
                   <p
                     key={index}
                     style={{
                       margin: 0,
                       padding: "5px 0px",
                       borderBottom: "1px solid gray",
-                      cursor: "pointer",
+                      cursor: "pointer"
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.backgroundColor = "gray";
@@ -119,14 +99,16 @@ function App() {
                       e.target.style.backgroundColor = "white";
                     }}
                     onClick={() => {
-                      setShowCountries(false)
-                      setCity(country.value)
+                      setShowCountries(false);
+                      setCity(country.value);
                     }}
                   >
                     {country.value}
                   </p>
-                );
-              })}
+                ))
+              ) : (
+                <p style={{textAlign:'center'}}>No matching countries Please enter city manually </p>
+              )}
             </div>
           )}
         </div>
@@ -137,12 +119,12 @@ function App() {
           {loading ? (
             <p style={{ textAlign: "center" }}>Loading...</p>
           ) : (
-            invalid.length == 0 && (
+            invalid.length === 0 && (
               <div
                 style={{
                   textAlign: "center",
                   border: "1px solid white",
-                  marginTop: "15px",
+                  marginTop: "15px"
                 }}
               >
                 <p>City Name : {weatherData?.location?.name}</p>
