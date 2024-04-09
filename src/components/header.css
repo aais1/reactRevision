@@ -1,0 +1,9 @@
+.header{
+    display: flex;
+    width: 100vw;
+    justify-content: space-between;
+    margin: 0px 30px;
+    background-color: white;
+
+}
+
